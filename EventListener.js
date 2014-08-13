@@ -88,27 +88,31 @@ this.Element && Element.prototype.attachEvent && !Element.prototype.addEventList
 	});
 
 	// CustomEvent
-	Object.defineProperty(Window.prototype, "CustomEvent", {
-		get: function () {
-			var self = this;
+	try {
+		new window.CustomEvent('?');
+	} catch (e) {
+		Object.defineProperty(Window.prototype, "CustomEvent", {
+			get: function () {
+				var self = this;
 
-			return function CustomEvent(type, eventInitDict) {
-				var event = self.document.createEventObject(), key;
+				return function CustomEvent(type, eventInitDict) {
+					var event = self.document.createEventObject(), key;
 
-				event.type = type;
-				for (key in eventInitDict) {
-					if (key == 'cancelable'){
-						event.returnValue = !eventInitDict.cancelable;
-					} else if (key == 'bubbles'){
-						event.cancelBubble = !eventInitDict.bubbles;
-					} else if (key == 'detail'){
-						event.detail = eventInitDict.detail;
+					event.type = type;
+					for (key in eventInitDict) {
+						if (key == 'cancelable'){
+							event.returnValue = !eventInitDict.cancelable;
+						} else if (key == 'bubbles'){
+							event.cancelBubble = !eventInitDict.bubbles;
+						} else if (key == 'detail'){
+							event.detail = eventInitDict.detail;
+						}
 					}
-				}
-				return event;
-			};
-		}
-	});
+					return event;
+				};
+			}
+		})
+	};
 
 	// ready
 	function ready(event) {
@@ -124,22 +128,26 @@ this.Element && Element.prototype.attachEvent && !Element.prototype.addEventList
 	window.addEventListener("load", ready);
 })();
 
-!this.CustomEvent && (function() {
-	// CustomEvent for browsers which don't natively support the Constructor method
-	window.CustomEvent = function CustomEvent(type, eventInitDict) {
-		var event;
-		eventInitDict = eventInitDict || {bubbles: false, cancelable: false, detail: undefined};
-
-		try {
-			event = document.createEvent('CustomEvent');
-			event.initCustomEvent(type, eventInitDict.bubbles, eventInitDict.cancelable, eventInitDict.detail);
-		} catch (error) {
-			// for browsers which don't support CustomEvent at all, we use a regular event instead
-			event = document.createEvent('Event');
-			event.initEvent(type, eventInitDict.bubbles, eventInitDict.cancelable);
-			event.detail = eventInitDict.detail;
-		}
-
-		return event;
-	};
-})();
+try {
+	new window.CustomEvent('?');
+} catch (e) {
+	(function() {
+		// CustomEvent for browsers which don't natively support the Constructor method
+		window.CustomEvent = function CustomEvent(type, eventInitDict) {
+			var event;
+			eventInitDict = eventInitDict || {bubbles: false, cancelable: false, detail: undefined};
+	
+			try {
+				event = document.createEvent('CustomEvent');
+				event.initCustomEvent(type, eventInitDict.bubbles, eventInitDict.cancelable, eventInitDict.detail);
+			} catch (error) {
+				// for browsers which don't support CustomEvent at all, we use a regular event instead
+				event = document.createEvent('Event');
+				event.initEvent(type, eventInitDict.bubbles, eventInitDict.cancelable);
+				event.detail = eventInitDict.detail;
+			}
+	
+			return event;
+		};
+	})();
+}
